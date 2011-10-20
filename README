@@ -1,0 +1,24 @@
+Proof of concept.
+
+Example: 
+
+(asdf:load-system :tracking-changes)
+(in-package :tracking-changes)
+
+(defparameter *some-code* '(progn
+			    (defpackage :tmp-package (:use :cl))
+			    (in-package :tmp-package)
+			    (defun f () (print "some-code"))
+			    (f)))
+
+(with-monitoring 'new-packages
+  (eval *some-code*))
+
+;;Who changes in lisp?
+
+(get-sandbox-packages-list 'new-packages)
+;; => (#<PACKAGE "TMP-PACKAGE">)
+(delete-in-packages-sandbox (get-sandbox-packages 'new-packages))
+
+  
+  
