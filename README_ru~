@@ -1,0 +1,21 @@
+TRACKING-CHANGES.
+Утилита для отслеживания измений после выполнения кода.
+
+Проект реализован пока, только как "проверка концепции" (proof-of-concept).
+
+Пример использования:
+
+-------------------------------
+(asdf:load-system :tracking-changes)
+(in-package :tracking-changes)
+
+(defparameter *some-code* '(progn
+			    (defpackage :tmp-package (:use :cl))
+			    (in-package :tmp-package)
+			    (defun f () (print "some-code"))
+			    (f)))
+
+(with-monitoring 'new-packages
+  (eval *some-code*)) ;; или (load "your_file.lisp")
+
+Who changes in lisp?

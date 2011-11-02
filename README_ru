@@ -1,0 +1,58 @@
+TRACKING-CHANGES.
+Утилита для отслеживания измений после выполнения кода.
+
+Проект реализован пока, только как "проверка концепции" (proof-of-concept).
+Зависимости: нет.
+Экспортируемые ф-ии:
+
+WITH-MONITORING - записывает произошедшие изменения.
+(with-monitoring <key> &body <forms>) 
+    key - с этим значением связываются произошедшие изменения.
+    forms - формы, при выполнение которых надо отслеживать изменения.
+
+GET-SANDBOX-PACKAGES-LIST - возвращает список новых пакетов, появившихся при выполнении
+                            кода, который обёрнут макросом with-monitoring.
+(get-sandbox-packages-list <key>)
+    key - тот ключ, с которым связывались изменения в форме (with-monitoring key ...)
+
+GET-SANDBOX-PACKAGES - возвращает хэш-таблицу в которой ключами являются пакеты, появивееся
+                       при выполнении кода, обёрнутом макросом with-monitoring.
+(get-sandbox-packages <key>)
+    key - тот ключ, с которым связывались изменения в форме (with-monitoring key ...)
+
+TRACKING-CHANGES-UTILS:DELETE-IN-PACKAGES-SANDBOX - удаляет все пакеты из системы, которые появились
+                                                    при выполнениее кода в форме with-monitoring
+(tracking-changes-utils:delete-in-packages-sandbox <packages-hash-table> &optional <packages>)
+    packages-hash-table - хэш-таблица, возвращенная ф-ией get-sandbox-packages.
+    packages - если задан, то должен быть списком пакетов, которые добавлялись при выполнении кода,
+               внутри формы (with-monitoring key ...)
+
+Пример использования:
+-------------------------------
+(push "/path/to/tracking-changes/" asdf:*central-registry*)
+(asdf:load-system :tracking-changes)
+(in-package :tracking-changes)
+
+(defparameter *some-code* '(progn
+			    (defpackage :tmp-package (:use :cl))
+			    (in-package :tmp-package)
+			    (defun f () (print "some-code"))
+			    (f)))
+
+;; Первый аргумент - это ключ по которому мы сможем вытащить изменения вызванные кодом
+(with-monitoring :my-new-packages
+  ;;Здесь может любая выполняемая форма,
+  ;;например: (your-function ...) или (load "your-file")
+  (eval *some-code*))
+--------------------
+
+Какие произошли изменения в лисп? Пока можно узнать только о новых пакетах:
+
+(get-sandbox-packages-list :my-new-packages)
+;; => (#<PACKAGE "TMP-PACKAGE">)
+
+В пакете tracking-changes-utils есть ф-ия delete-in-packages-sandbox - с её помощью,
+мы можем удалить все добавленные пакеты:
+
+(tracking-changes-utils:delete-in-packages-sandbox (get-sandbox-packages :my-new-packages))
+------------------------------
